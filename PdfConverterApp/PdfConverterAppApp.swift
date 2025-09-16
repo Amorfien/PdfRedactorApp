@@ -1,0 +1,20 @@
+//
+//  PdfConverterAppApp.swift
+//  PdfConverterApp
+//
+//  Created by Pavel Grigorev on 16.09.2025.
+//
+
+import SwiftUI
+
+@main
+struct PdfConverterAppApp: App {
+    let persistenceController = PersistenceController.shared
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+        }
+    }
+}
