@@ -19,12 +19,16 @@ struct WelcomeView: View {
         NavigationView {
             ZStack {
                 contentView
-                NavigationLink(
-                    destination: DocGeneratorView(),
-                    isActive: $navigateToGenerator,
-                    label: { EmptyView() }
-                )
-                .hidden()
+                if #available(iOS 16.0, *) {
+                    NavigationLink(
+                        destination: DocGeneratorView(viewModel: DocGeneratorViewModel(context: CoreDataManager.shared.container.viewContext)),
+                        isActive: $navigateToGenerator,
+                        label: { EmptyView() }
+                    )
+                    .hidden()
+                } else {
+                    // Fallback on earlier versions
+                }
             }
             //                .navigationTitle("PDF Redactor")
             //                .navigationBarTitleDisplayMode(.large)
