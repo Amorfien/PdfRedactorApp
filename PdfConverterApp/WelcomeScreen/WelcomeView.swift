@@ -10,6 +10,7 @@ import SwiftUI
 struct WelcomeView: View {
     @ObservedObject private var viewModel: WelcomeViewModel
     @State private var navigateToGenerator = false
+    @State private var navigateToStorage = false
 
     init(viewModel: WelcomeViewModel) {
         self.viewModel = viewModel
@@ -29,6 +30,12 @@ struct WelcomeView: View {
                 } else {
                     // Fallback on earlier versions
                 }
+//                NavigationLink(
+//                    destination: SavedDocsView(viewModel: SavedDocsViewModel()),
+//                    isActive: $navigateToStorage,
+//                    label: { EmptyView() }
+//                )
+//                .hidden()
             }
             //                .navigationTitle("PDF Redactor")
             //                .navigationBarTitleDisplayMode(.large)
@@ -41,7 +48,10 @@ struct WelcomeView: View {
             VStack(spacing: 30) {
                 headerSection
                 featuresList
-                actionButton
+                VStack {
+                    generateButton
+                    storageButton
+                }
             }
             .padding()
         }
@@ -69,12 +79,27 @@ struct WelcomeView: View {
         }
     }
 
-    private var actionButton: some View {
+    private var generateButton: some View {
         Button(action: {
-            viewModel.nextButtonDidTap()
+            viewModel.generateButtonDidTap()
             navigateToGenerator = true
         }) {
-            Text("Начать работу")
+            Text("Создать PDF")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(12)
+        }
+    }
+
+    private var storageButton: some View {
+        Button(action: {
+            viewModel.StorageButtonDidTap()
+            navigateToStorage = true
+        }) {
+            Text("Мои документы")
                 .font(.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

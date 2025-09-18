@@ -61,7 +61,7 @@ struct SavedDocsView: View {
         .sheet(isPresented: $viewModel.showDocumentReader) {
             if let document = viewModel.selectedDocument, let url = document.fileURL {
 //                DocReaderView(pdfURL: document.fileURL)
-                DocReaderView(pdfURL: url, viewModel: DocReaderViewModel(pdfURL: url))
+                DocReaderView(viewModel: DocReaderViewModel(pdfURL: url))
             }
         }
     }

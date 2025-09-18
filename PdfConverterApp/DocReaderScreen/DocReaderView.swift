@@ -8,35 +8,16 @@
 import SwiftUI
 import PDFKit
 
-//struct DocReaderView: View {
-//    @ObservedObject private var viewModel: DocReaderViewModel
-//    @State private var showShareSheet = false
-//
-//    var pdfURL: URL
-//
-//    init(pdfURL: URL, viewModel: DocReaderViewModel) {
-//        self.pdfURL = pdfURL
-//        self.viewModel = viewModel
-//    }
-//
-//    var body: some View {
-//        Text("Hello, World!")
-//    }
-//
-//}
-
-
 struct DocReaderView: View {
     @ObservedObject private var viewModel: DocReaderViewModel
     @Environment(\.presentationMode) private var presentationMode
     @State private var showShareSheet = false
 
-    var pdfURL: URL
+    private let isJustGenerated: Bool
 
-    init(pdfURL: URL, viewModel: DocReaderViewModel) {
-        self.pdfURL = pdfURL
+    init(viewModel: DocReaderViewModel, isJustGenerated: Bool = true) {
         self.viewModel = viewModel
-        print(pdfURL)
+        self.isJustGenerated = isJustGenerated
     }
 
     var body: some View {
@@ -50,7 +31,9 @@ struct DocReaderView: View {
                         HStack(spacing: 20) {
                             Spacer()
                             shareButton
-                            saveButton
+                            if isJustGenerated {
+                                saveButton
+                            }
                         }
                         .padding(16)
                         Spacer()
@@ -194,7 +177,7 @@ struct DocReaderView: View {
 
     private var saveButton: some View {
         Button(action: {
-            viewModel.saveToDocuments()
+//            viewModel.saveToDocuments()
         }) {
             Image(systemName: "square.and.arrow.down")
                 .padding(10)
@@ -276,6 +259,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     let url: URL = URL(string: "https://disk.sample.cat/samples/pdf/sample-images-fit.pdf")!
 
     NavigationView {
-        DocReaderView(pdfURL: url, viewModel: DocReaderViewModel(pdfURL: url))
+        DocReaderView(viewModel: DocReaderViewModel(pdfURL: url), isJustGenerated: true)
     }
 }

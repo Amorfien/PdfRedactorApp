@@ -31,8 +31,10 @@ final class WelcomeViewModel: ObservableObject {
         ]
     }
 
-    /// Навигация к генератору документов
-    func nextButtonDidTap() {
-        print("Start")
+    func generateButtonDidTap() {
+        print("Generate")
+    }
+    func StorageButtonDidTap() {
+        print("Storage")
     }
 }

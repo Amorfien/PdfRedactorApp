@@ -99,21 +99,21 @@ final class DocReaderViewModel: ObservableObject {
         return temporaryPDFURL ?? pdfURL
     }
 
-    func saveToDocuments() {
-        guard let document = pdfDocument else { return }
-
-        let fileManager = FileManager.default
-        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileName = "edited_document_\(Date().timeIntervalSince1970).pdf"
-        let destinationURL = documentsDirectory.appendingPathComponent(fileName)
-
-        do {
-            if document.write(to: destinationURL) {
-                print("Документ сохранен: \(destinationURL)")
-                // Здесь можно добавить логику сохранения в CoreData
-            }
-        }
-    }
+//    func saveToDocuments() {
+//        guard let document = pdfDocument else { return }
+//
+//        let fileManager = FileManager.default
+//        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+//        let fileName = "edited_document_\(Date().timeIntervalSince1970).pdf"
+//        let destinationURL = documentsDirectory.appendingPathComponent(fileName)
+//
+//        do {
+//            if document.write(to: destinationURL) {
+//                print("Документ сохранен: \(destinationURL)")
+//                // Здесь можно добавить логику сохранения в CoreData
+//            }
+//        }
+//    }
 
     // MARK: - Private Methods
 
