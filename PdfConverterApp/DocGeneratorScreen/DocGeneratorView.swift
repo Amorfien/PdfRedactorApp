@@ -14,6 +14,7 @@ struct DocGeneratorView: View {
     @ObservedObject private var viewModel: DocGeneratorViewModel
     @State private var showImagePicker = false
     @State private var showDocumentReader = false
+    @State private var navigateToStorage = false
 
     init(viewModel: DocGeneratorViewModel) {
         self.viewModel = viewModel
@@ -23,6 +24,13 @@ struct DocGeneratorView: View {
         VStack {
             if viewModel.selectedImages.isEmpty {
                 EmptyStateView()
+                actionButton
+                NavigationLink(
+                    destination: SavedDocsView(viewModel: SavedDocsViewModel()),
+                    isActive: $navigateToStorage,
+                    label: { EmptyView() }
+                )
+                .hidden()
             } else {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 10) {
@@ -64,6 +72,21 @@ struct DocGeneratorView: View {
             if let pdfURL = viewModel.generatedPDFURL {
                 DocReaderView(pdfURL: pdfURL, viewModel: DocReaderViewModel(pdfURL: pdfURL))
             }
+        }
+    }
+
+    private var actionButton: some View {
+        Button(action: {
+//            viewModel.nextButtonDidTap()
+            navigateToStorage = true
+        }) {
+            Text("Посмотреть сохраненные")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(12)
         }
     }
 }
