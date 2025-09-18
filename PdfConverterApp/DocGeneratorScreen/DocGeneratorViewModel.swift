@@ -123,6 +123,8 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
         newDocument.creationDate = Date()
         newDocument.pdfData = pdfData
 
+        newDocument.fileSize = fileSizeString(for: generatedPDFURL)
+
         // Генерируем thumbnail
         if let pdfDocument = PDFDocument(data: pdfData),
            let firstPage = pdfDocument.page(at: 0) {
@@ -137,6 +139,20 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
         } catch {
             errorMessage = "Не удалось сохранить документ в базу данных"
         }
+    }
+
+    private func fileSizeString(for fileURL: URL?) -> String {
+        if let fileURL {
+            do {
+                let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+                if let fileSize = attributes[.size] as? Int64 {
+                    return ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
+                }
+            } catch {
+                print("Ошибка получения размера файла: \(error)")
+            }
+        }
+        return "Неизвестный размер"
     }
 
     func sharePDF() {

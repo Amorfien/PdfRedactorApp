@@ -3,6 +3,7 @@
     <entity name="DocEntity" representedClassName="DocEntity" syncable="YES">
         <attribute name="creationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="fileExtension" optional="YES" attributeType="String"/>
+        <attribute name="fileSize" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="pdfData" optional="YES" attributeType="Binary"/>

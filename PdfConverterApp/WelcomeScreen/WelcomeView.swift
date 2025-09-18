@@ -28,12 +28,12 @@ struct WelcomeView: View {
                     .hidden()
 
                 
-//                NavigationLink(
-//                    destination: SavedDocsView(viewModel: SavedDocsViewModel()),
-//                    isActive: $navigateToStorage,
-//                    label: { EmptyView() }
-//                )
-//                .hidden()
+                NavigationLink(
+                    destination: SavedDocsView(viewModel: SavedDocsViewModel()),
+                    isActive: $navigateToStorage,
+                    label: { EmptyView() }
+                )
+                .hidden()
             }
             //                .navigationTitle("PDF Redactor")
             //                .navigationBarTitleDisplayMode(.large)

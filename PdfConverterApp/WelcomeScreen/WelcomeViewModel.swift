@@ -8,6 +8,8 @@
 import Foundation
 import SwiftUI
 
+import CoreData
+
 final class WelcomeViewModel: ObservableObject {
 
     // MARK: - Published Properties
@@ -16,6 +18,18 @@ final class WelcomeViewModel: ObservableObject {
     // MARK: - Init
     init() {
         loadFeatures()
+
+//        let context = CoreDataManager.shared.container.viewContext
+//        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = DocEntity.fetchRequest()
+//        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+//
+//        do {
+//            try context.execute(deleteRequest)
+//            try context.save()
+//            print("Все DocEntity удалены")
+//        } catch {
+//            print("Ошибка удаления: \(error)")
+//        }
     }
 
     // MARK: - Public Methods
