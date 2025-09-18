@@ -10,26 +10,32 @@ import PhotosUI
 import PDFKit
 import CoreData
 
-// FIXME: PhotosPickerItem vs 15.0
-@available(iOS 16.0, *)
 final class DocGeneratorViewModel: NSObject, ObservableObject {
-    @Published var selectedItems: [PhotosPickerItem] = [] {
+//    @Published var selectedItems: [PhotosPickerItem] = [] {
+//        didSet {
+//            loadImages()
+//        }
+//    }
+    @Published var selectedImages: [UIImage] = [] {
         didSet {
             loadImages()
         }
     }
 
-    @Published var selectedImages: [UIImage] = []
+//    @Published var selectedImages: [UIImage] = []
     @Published var generatedPDFURL: URL?
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    private let context: NSManagedObjectContext
+    private let context = CoreDataManager.shared.container.viewContext
 
-    init(context: NSManagedObjectContext) {
-        self.context = context
-        super.init()
-    }
+//    private let context: NSManagedObjectContext
+//    @Environment(\.managedObjectContext) private var context
+
+//    init(context: NSManagedObjectContext) {
+//        self.context = context
+//        super.init()
+//    }
 
     func loadImages() {
         Task { @MainActor in
@@ -38,16 +44,16 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
 
             var loadedImages: [UIImage] = []
 
-            for item in selectedItems {
-                do {
-                    if let data = try await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        loadedImages.append(image)
-                    }
-                } catch {
-                    errorMessage = "Не удалось загрузить изображение"
-                }
-            }
+//            for item in selectedItems {
+//                do {
+//                    if let data = try await item.loadTransferable(type: Data.self),
+//                       let image = UIImage(data: data) {
+//                        loadedImages.append(image)
+//                    }
+//                } catch {
+//                    errorMessage = "Не удалось загрузить изображение"
+//                }
+//            }
 
             selectedImages.append(contentsOf: loadedImages)
             isLoading = false
@@ -58,9 +64,9 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
         if let index = selectedImages.firstIndex(of: image) {
             selectedImages.remove(at: index)
             // Также удаляем соответствующий PhotosPickerItem
-            if index < selectedItems.count {
-                selectedItems.remove(at: index)
-            }
+//            if index < selectedItems.count {
+//                selectedItems.remove(at: index)
+//            }
         }
     }
 
@@ -81,6 +87,7 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
 
         // Создаем временный файл
         let tempDirectory = FileManager.default.temporaryDirectory
+//        print(tempDirectory)
         let fileName = "document_\(Date().timeIntervalSince1970).pdf"
         let fileURL = tempDirectory.appendingPathComponent(fileName)
 
@@ -108,7 +115,8 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
     }
 
     private func savePDFToCoreData(pdfData: Data, fileName: String) {
-        let newDocument = DocumentEntity(context: context)
+//        let context = CoreDataManager.shared.container.viewContext
+        let newDocument = DocEntity(context: context)
         newDocument.id = UUID()
         newDocument.name = fileName.replacingOccurrences(of: ".pdf", with: "")
         newDocument.fileExtension = "pdf"
@@ -136,7 +144,7 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
     }
 
     func clearSelection() {
-        selectedItems.removeAll()
+//        selectedItems.removeAll()
         selectedImages.removeAll()
         generatedPDFURL = nil
     }

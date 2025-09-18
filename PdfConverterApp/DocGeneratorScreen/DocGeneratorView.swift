@@ -8,12 +8,12 @@
 import SwiftUI
 import PhotosUI
 
-// FIXME: PhotosPickerItem vs 15.0
-@available(iOS 16.0, *)
 struct DocGeneratorView: View {
     @ObservedObject private var viewModel: DocGeneratorViewModel
     @State private var showImagePicker = false
     @State private var showDocumentReader = false
+
+    @State private var showLibraryPicker = false
 
     init(viewModel: DocGeneratorViewModel) {
         self.viewModel = viewModel
@@ -53,18 +53,28 @@ struct DocGeneratorView: View {
             }
         }
         .navigationTitle("Создать PDF")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                PhotosPicker(selection: $viewModel.selectedItems,
-                           matching: .images,
-                           photoLibrary: .shared()) {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showLibraryPicker = true
+                } label: {
                     Image(systemName: "plus")
                 }
             }
         }
+        .imagePicker(
+            isPresented: $showLibraryPicker,
+            sourceType: .photoLibrary,
+            onImageSelected: { image in
+                viewModel.selectedImages.append(image)
+            }
+        )
         .sheet(isPresented: $showDocumentReader) {
             if let pdfURL = viewModel.generatedPDFURL {
-                DocReaderView(viewModel: DocReaderViewModel(pdfURL: pdfURL))
+                DocReaderView(viewModel: DocReaderViewModel(pdfURL: pdfURL, onSaveTap: {
+                    viewModel.savePDF()
+                }))
             }
         }
     }
@@ -83,7 +93,6 @@ struct EmptyStateView: View {
     }
 }
 
-@available(iOS 16.0, *)
 struct ActionButtonsView: View {
     @ObservedObject var viewModel: DocGeneratorViewModel
     @Binding var showDocumentReader: Bool
@@ -98,20 +107,13 @@ struct ActionButtonsView: View {
                 }
             }
             .buttonStyle(PrimaryButtonStyle())
-
-            Button("Сохранить") {
-                viewModel.savePDF()
-            }
-            .buttonStyle(SecondaryButtonStyle())
         }
         .padding()
     }
 }
 
 #Preview {
-    if #available(iOS 16.0, *) {
-        DocGeneratorView(viewModel: DocGeneratorViewModel(context: CoreDataManager.shared.container.viewContext))
-    } else {
-        // Fallback on earlier versions
+    NavigationView {
+        DocGeneratorView(viewModel: DocGeneratorViewModel())
     }
 }

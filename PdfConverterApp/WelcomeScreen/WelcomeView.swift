@@ -20,16 +20,14 @@ struct WelcomeView: View {
         NavigationView {
             ZStack {
                 contentView
-                if #available(iOS 16.0, *) {
                     NavigationLink(
-                        destination: DocGeneratorView(viewModel: DocGeneratorViewModel(context: CoreDataManager.shared.container.viewContext)),
+                        destination: DocGeneratorView(viewModel: DocGeneratorViewModel(/*context: CoreDataManager.shared.container.viewContext*/)),
                         isActive: $navigateToGenerator,
                         label: { EmptyView() }
                     )
                     .hidden()
-                } else {
-                    // Fallback on earlier versions
-                }
+
+                
 //                NavigationLink(
 //                    destination: SavedDocsView(viewModel: SavedDocsViewModel()),
 //                    isActive: $navigateToStorage,
@@ -41,6 +39,13 @@ struct WelcomeView: View {
             //                .navigationBarTitleDisplayMode(.large)
         }
     }
+
+//    private func createPdfDestination() -> some View {
+//        let viewModel = DocGeneratorViewModel(context: CoreDataManager.shared.container.viewContext)
+//        let destination = DocGeneratorView(viewModel: viewModel)
+//        return destination
+//    }
+
 
 
     private var contentView: some View {

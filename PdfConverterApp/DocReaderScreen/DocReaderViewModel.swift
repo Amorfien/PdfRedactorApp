@@ -30,13 +30,16 @@ final class DocReaderViewModel: ObservableObject {
     @Published var showDeleteConfirmation: Bool = false
     @Published var pageToDelete: Int?
 
+    var onSaveTap: (() -> Void)?
+
     // MARK: - Properties
     private let pdfURL: URL
     private var temporaryPDFURL: URL?
 
     // MARK: - Init
-    init(pdfURL: URL) {
+    init(pdfURL: URL, onSaveTap: (() -> Void)? = nil) {
         self.pdfURL = pdfURL
+        self.onSaveTap = onSaveTap
         loadPDFDocument()
     }
 
@@ -114,6 +117,10 @@ final class DocReaderViewModel: ObservableObject {
 //            }
 //        }
 //    }
+
+    func saveToDb() {
+        onSaveTap?()
+    }
 
     // MARK: - Private Methods
 

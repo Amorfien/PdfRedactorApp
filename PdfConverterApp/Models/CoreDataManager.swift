@@ -13,7 +13,7 @@ class CoreDataManager {
     let container: NSPersistentContainer
 
     init() {
-        container = NSPersistentContainer(name: "PDFModel")
+        container = NSPersistentContainer(name: "PdfConverterApp")
         container.loadPersistentStores { description, error in
             if let error = error {
                 fatalError("Core Data failed to load: \(error.localizedDescription)")

@@ -15,7 +15,10 @@ struct DocReaderView: View {
 
     private let isJustGenerated: Bool
 
-    init(viewModel: DocReaderViewModel, isJustGenerated: Bool = true) {
+    init(
+        viewModel: DocReaderViewModel,
+        isJustGenerated: Bool = true
+    ) {
         self.viewModel = viewModel
         self.isJustGenerated = isJustGenerated
     }
@@ -177,7 +180,7 @@ struct DocReaderView: View {
 
     private var saveButton: some View {
         Button(action: {
-//            viewModel.saveToDocuments()
+            viewModel.saveToDb()
         }) {
             Image(systemName: "square.and.arrow.down")
                 .padding(10)
