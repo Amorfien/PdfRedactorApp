@@ -40,14 +40,6 @@ struct WelcomeView: View {
         }
     }
 
-//    private func createPdfDestination() -> some View {
-//        let viewModel = DocGeneratorViewModel(context: CoreDataManager.shared.container.viewContext)
-//        let destination = DocGeneratorView(viewModel: viewModel)
-//        return destination
-//    }
-
-
-
     private var contentView: some View {
         ScrollView {
             VStack(spacing: 30) {

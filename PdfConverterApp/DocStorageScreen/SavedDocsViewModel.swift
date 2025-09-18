@@ -66,6 +66,21 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
         return nil
     }
 
+    func deleteAll() {
+        let context = coreDataManager.container.viewContext
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = DocEntity.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+
+        do {
+            try context.execute(deleteRequest)
+            try context.save()
+            print("Все DocEntity удалены")
+            documents.removeAll()
+        } catch {
+            print("Ошибка удаления: \(error)")
+        }
+    }
+
     // MARK: - Private Methods
 
     private func setupFetchedResultsController() {

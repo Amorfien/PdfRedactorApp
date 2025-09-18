@@ -155,10 +155,6 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
         return "Неизвестный размер"
     }
 
-    func sharePDF() {
-        // Реализация будет в вызывающем коде через ShareSheet
-    }
-
     func clearSelection() {
 //        selectedItems.removeAll()
         selectedImages.removeAll()

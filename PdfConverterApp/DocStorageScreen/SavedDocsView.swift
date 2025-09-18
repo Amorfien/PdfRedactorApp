@@ -10,8 +10,6 @@ import CoreData
 
 struct SavedDocsView: View {
     @ObservedObject private var viewModel: SavedDocsViewModel
-    @State private var showShareSheet = false
-    @State private var documentToShare: DocEntity?
 
     init(viewModel: SavedDocsViewModel) {
         self.viewModel = viewModel
@@ -36,10 +34,11 @@ struct SavedDocsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    // killall
+                    viewModel.deleteAll()
                 } label: {
                     Image(systemName: "trash")
                 }
+                .disabled(viewModel.documents.isEmpty)
             }
         }
     }
@@ -47,11 +46,7 @@ struct SavedDocsView: View {
     private var documentsListView: some View {
         List {
             ForEach(viewModel.documents, id: \.id) { document in
-                DocumentCell(
-                    document: document//,
-//                    isSelected: viewModel.documentsToMerge.contains(where: { $0.id == document.id }),
-//                    isMergeMode: viewModel.showMergeSelection
-                )
+                DocumentCell(document: document)
                 .contentShape(Rectangle())
                 .onTapGesture {
 
@@ -60,13 +55,6 @@ struct SavedDocsView: View {
 
                 }
                 .contextMenu {
-                    Button {
-                        documentToShare = document
-                        showShareSheet = true
-                    } label: {
-                        Label("Поделиться", systemImage: "square.and.arrow.up")
-                    }
-                    
                     Button(role: .destructive) {
                         viewModel.deleteDocument(document)
                     } label: {
@@ -99,8 +87,6 @@ struct SavedDocsView: View {
 // MARK: - DocumentCell
 struct DocumentCell: View {
     let document: DocEntity
-//    let isSelected: Bool
-//    let isMergeMode: Bool
 
     var body: some View {
         HStack(spacing: 16) {
@@ -133,7 +119,7 @@ struct DocumentCell: View {
                     .font(.headline)
                     .lineLimit(1)
 
-                Text("\(document.fileExtension) • \(formattedDate)")
+                Text("\(document.fileExtension?.uppercased() ?? "Unknown") • \(formattedDate)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
@@ -144,15 +130,9 @@ struct DocumentCell: View {
 
             Spacer()
 
-            // Selection Indicator
-//            if isMergeMode {
-//                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-//                    .foregroundColor(isSelected ? .blue : .gray)
-//                    .font(.title2)
-//            }
         }
         .padding(.vertical, 8)
-        .background(Color.clear)//(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+        .background(Color.clear)
         .cornerRadius(12)
     }
 
@@ -162,18 +142,6 @@ struct DocumentCell: View {
         formatter.timeStyle = .short
         return formatter.string(from: document.creationDate ?? Date())
     }
-
-//    private var fileSizeString: String {
-//        do {
-//            let attributes = try FileManager.default.attributesOfItem(atPath: document.fileURL?.path ?? "")
-//            if let fileSize = attributes[.size] as? Int64 {
-//                return ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
-//            }
-//        } catch {
-//            print("Ошибка получения размера файла: \(error)")
-//        }
-//        return "Неизвестный размер"
-//    }
 }
 
 // MARK: - Supporting Views
