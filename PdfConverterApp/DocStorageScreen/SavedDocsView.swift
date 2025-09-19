@@ -10,6 +10,10 @@ import CoreData
 
 struct SavedDocsView: View {
     @ObservedObject private var viewModel: SavedDocsViewModel
+    @State private var showDocumentReader = false
+
+    @State private var documentToOpen: DocEntity?
+//    private var dataToOpen: Data?
 
     init(viewModel: SavedDocsViewModel) {
         self.viewModel = viewModel
@@ -32,33 +36,98 @@ struct SavedDocsView: View {
         .navigationTitle("Мои документы")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    viewModel.deleteAll()
-                } label: {
-                    Image(systemName: "trash")
+//            if viewModel.showMergeSelection {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button("Отмена") {
+//                        viewModel.cancelMerge()
+//                    }
+//                }
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button("Объединить") {
+//                        viewModel.completeMerge()
+//                    }
+//                    .disabled(viewModel.documentsToMerge.count < 2)
+//                }
+//            } else {
+//                ToolbarItem(placement: .topBarTrailing) {
+//                    Button {
+//                        viewModel.deleteAll()
+//                    } label: {
+//                        Image(systemName: "trash")
+//                    }
+//                    .disabled(viewModel.documents.isEmpty)
+//                }
+//            }
+            ToolbarItemGroup(placement: .navigationBarLeading) {
+                if viewModel.showMergeSelection {
+                    Button("Отмена") {
+                        viewModel.cancelMerge()
+                    }
                 }
-                .disabled(viewModel.documents.isEmpty)
             }
+
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                if viewModel.showMergeSelection {
+                    Button("Объединить") {
+                        viewModel.completeMerge()
+                    }
+                    .disabled(viewModel.documentsToMerge.count < 2)
+                } else {
+                    Button {
+                        viewModel.deleteAll()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .disabled(viewModel.documents.isEmpty)
+                }
+            }
+        }
+        .sheet(isPresented: $showDocumentReader) {
+            DocReaderView(viewModel: DocReaderViewModel(pdfData: viewModel.dataToOpen))
         }
     }
 
     private var documentsListView: some View {
         List {
             ForEach(viewModel.documents, id: \.id) { document in
-                DocumentCell(document: document)
+                DocumentCell(
+                    document: document,
+                    isSelected: viewModel.documentsToMerge.contains(where: { $0.id == document.id }),
+                    isMergeMode: viewModel.showMergeSelection
+                )
                 .contentShape(Rectangle())
                 .onTapGesture {
-
-//              open pdf
-                    print("Open")
-
+                    if viewModel.showMergeSelection {
+                        if viewModel.documentsToMerge.contains(where: { $0.id == document.id }) {
+                            viewModel.removeDocumentFromMerge(document)
+                        } else {
+                            viewModel.addDocumentToMerge(document)
+                        }
+                    } else {
+                        viewModel.dataToOpen = document.pdfData
+                        showDocumentReader = true
+                    }
                 }
                 .contextMenu {
-                    Button(role: .destructive) {
-                        viewModel.deleteDocument(document)
-                    } label: {
-                        Label("Удалить", systemImage: "trash")
+                    if !viewModel.showMergeSelection {
+                        Button {
+                            //                        documentToShare = document
+                            //                        showShareSheet = true
+                        } label: {
+                            Label("Поделиться", systemImage: "square.and.arrow.up")
+                        }
+                        
+                        Button(role: .destructive) {
+                            viewModel.deleteDocument(document)
+                        } label: {
+                            Label("Удалить", systemImage: "trash")
+                        }
+                        
+                        Button {
+                            viewModel.startMergeProcess(with: document)
+                        } label: {
+                            Label("Объединить", systemImage: "doc.on.doc")
+                        }
                     }
                 }
             }
@@ -82,11 +151,18 @@ struct SavedDocsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    private mutating func openPdfReader(document: DocEntity) {
+        documentToOpen = document
+        showDocumentReader = true
+    }
 }
 
 // MARK: - DocumentCell
 struct DocumentCell: View {
     let document: DocEntity
+    let isSelected: Bool
+    let isMergeMode: Bool
 
     var body: some View {
         HStack(spacing: 16) {
@@ -130,6 +206,12 @@ struct DocumentCell: View {
 
             Spacer()
 
+            // Selection Indicator
+            if isMergeMode {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isSelected ? .blue : .gray)
+                    .font(.title2)
+            }
         }
         .padding(.vertical, 8)
         .background(Color.clear)

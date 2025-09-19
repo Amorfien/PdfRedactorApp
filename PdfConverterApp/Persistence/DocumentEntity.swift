@@ -16,7 +16,6 @@ public class DocEntity: NSManagedObject {
     @NSManaged public var pdfData: Data?
     @NSManaged public var thumbnail: Data?
     @NSManaged public var fileSize: String?
-//    @NSManaged public var fileURL: URL?
 }
 
 extension DocEntity {

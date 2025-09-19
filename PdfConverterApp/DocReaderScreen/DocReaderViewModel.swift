@@ -33,12 +33,14 @@ final class DocReaderViewModel: ObservableObject {
     var onSaveTap: (() -> Void)?
 
     // MARK: - Properties
-    private let pdfURL: URL
+    private let pdfURL: URL?
     private var temporaryPDFURL: URL?
+    let pdfData: Data?
 
     // MARK: - Init
-    init(pdfURL: URL, onSaveTap: (() -> Void)? = nil) {
+    init(pdfURL: URL? = nil, pdfData: Data? = nil, onSaveTap: (() -> Void)? = nil) {
         self.pdfURL = pdfURL
+        self.pdfData = pdfData
         self.onSaveTap = onSaveTap
         loadPDFDocument()
     }
@@ -50,7 +52,15 @@ final class DocReaderViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let data = try Data(contentsOf: pdfURL)
+            let data: Data
+            if let pdfURL {
+                data = try Data(contentsOf: pdfURL)
+            } else if let pdfData {
+                data = pdfData
+            } else {
+                isLoading = false
+                return
+            }
             pdfDocument = PDFDocument(data: data)
             totalPages = pdfDocument?.pageCount ?? 0
             currentPageIndex = 0
@@ -99,24 +109,8 @@ final class DocReaderViewModel: ObservableObject {
 
     func sharePDF() -> URL {
         // Возвращаем актуальный URL (оригинальный или временный с изменениями)
-        return temporaryPDFURL ?? pdfURL
+        return temporaryPDFURL ?? pdfURL! //FIXME: - force
     }
-
-//    func saveToDocuments() {
-//        guard let document = pdfDocument else { return }
-//
-//        let fileManager = FileManager.default
-//        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-//        let fileName = "edited_document_\(Date().timeIntervalSince1970).pdf"
-//        let destinationURL = documentsDirectory.appendingPathComponent(fileName)
-//
-//        do {
-//            if document.write(to: destinationURL) {
-//                print("Документ сохранен: \(destinationURL)")
-//                // Здесь можно добавить логику сохранения в CoreData
-//            }
-//        }
-//    }
 
     func saveToDb() {
         onSaveTap?()

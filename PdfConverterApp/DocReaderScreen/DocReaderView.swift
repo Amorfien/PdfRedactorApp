@@ -13,14 +13,14 @@ struct DocReaderView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var showShareSheet = false
 
-    private let isJustGenerated: Bool
+//    private let isJustGenerated: Bool
 
     init(
-        viewModel: DocReaderViewModel,
-        isJustGenerated: Bool = true
+        viewModel: DocReaderViewModel//,
+//        isJustGenerated: Bool = true
     ) {
         self.viewModel = viewModel
-        self.isJustGenerated = isJustGenerated
+//        self.isJustGenerated = isJustGenerated
     }
 
     var body: some View {
@@ -34,7 +34,7 @@ struct DocReaderView: View {
                         HStack(spacing: 20) {
                             Spacer()
                             shareButton
-                            if isJustGenerated {
+                            if viewModel.pdfData == nil {
                                 saveButton
                             }
                         }
@@ -48,12 +48,6 @@ struct DocReaderView: View {
         }
         .navigationTitle("Просмотр PDF")
         .navigationBarTitleDisplayMode(.inline)
-//        .toolbar {
-//            ToolbarItemGroup(placement: .navigationBarTrailing) {
-//                shareButton
-//                saveButton
-//            }
-//        }
         .alert("Ошибка", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -262,6 +256,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     let url: URL = URL(string: "https://disk.sample.cat/samples/pdf/sample-images-fit.pdf")!
 
     NavigationView {
-        DocReaderView(viewModel: DocReaderViewModel(pdfURL: url), isJustGenerated: true)
+        DocReaderView(viewModel: DocReaderViewModel(pdfURL: url))
     }
 }

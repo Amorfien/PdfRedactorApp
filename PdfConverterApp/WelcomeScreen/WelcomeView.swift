@@ -21,7 +21,7 @@ struct WelcomeView: View {
             ZStack {
                 contentView
                     NavigationLink(
-                        destination: DocGeneratorView(viewModel: DocGeneratorViewModel(/*context: CoreDataManager.shared.container.viewContext*/)),
+                        destination: DocGeneratorView(viewModel: DocGeneratorViewModel()),
                         isActive: $navigateToGenerator,
                         label: { EmptyView() }
                     )
@@ -35,8 +35,6 @@ struct WelcomeView: View {
                 )
                 .hidden()
             }
-            //                .navigationTitle("PDF Redactor")
-            //                .navigationBarTitleDisplayMode(.large)
         }
     }
 
@@ -77,33 +75,19 @@ struct WelcomeView: View {
     }
 
     private var generateButton: some View {
-        Button(action: {
+        Button("Создать PDF") {
             viewModel.generateButtonDidTap()
             navigateToGenerator = true
-        }) {
-            Text("Создать PDF")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
         }
+        .buttonStyle(PrimaryButtonStyle())
     }
 
     private var storageButton: some View {
-        Button(action: {
+        Button("Мои документы") {
             viewModel.StorageButtonDidTap()
             navigateToStorage = true
-        }) {
-            Text("Мои документы")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
         }
+        .buttonStyle(SecondaryButtonStyle())
     }
 
 }

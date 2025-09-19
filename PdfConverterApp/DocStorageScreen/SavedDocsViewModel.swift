@@ -16,8 +16,14 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showError: Bool = false
-    @Published var selectedDocument: DocEntity?
-    @Published var showDocumentReader: Bool = false
+//    @Published var selectedDocument: DocEntity?
+//    @Published var showDocumentReader: Bool = false
+//    @Published var documentToOpen: DocEntity?
+
+        @Published var showMergeSelection: Bool = false
+        @Published var documentToMerge: DocEntity?
+        @Published var documentsToMerge: [DocEntity] = []
+    var dataToOpen: Data?
 
     // MARK: - Core Data
     private let coreDataManager = CoreDataManager.shared
@@ -62,8 +68,59 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     }
 
     func shareDocument(_ document: DocEntity) -> URL? {
+        // FIXME: - 
 //        return document.fileURL
         return nil
+    }
+
+    func startMergeProcess(with document: DocEntity) {
+        documentToMerge = document
+        documentsToMerge = [document]
+        showMergeSelection = true
+    }
+
+    func addDocumentToMerge(_ document: DocEntity) {
+        if !documentsToMerge.contains(where: { $0.id == document.id }) {
+            documentsToMerge.append(document)
+        }
+    }
+
+    func removeDocumentFromMerge(_ document: DocEntity) {
+        documentsToMerge.removeAll { $0.id == document.id }
+    }
+
+    func completeMerge() {
+        guard documentsToMerge.count >= 2 else { return }
+
+        isLoading = true
+
+        // Создаем новый объединенный PDF
+        let mergedDocument = PDFDocument()
+
+        for document in documentsToMerge {
+            if let pdfDoc = PDFDocument(data: document.pdfData ?? Data()) {
+                for pageIndex in 0..<pdfDoc.pageCount {
+                    if let page = pdfDoc.page(at: pageIndex) {
+                        mergedDocument.insert(page, at: mergedDocument.pageCount)
+                    }
+                }
+            }
+        }
+
+        // Сохраняем объединенный документ
+        saveMergedDocument(mergedDocument)
+
+        // Сбрасываем состояние
+        documentsToMerge = []
+        documentToMerge = nil
+        showMergeSelection = false
+        isLoading = false
+    }
+
+    func cancelMerge() {
+        documentsToMerge = []
+        documentToMerge = nil
+        showMergeSelection = false
     }
 
     func deleteAll() {
@@ -97,6 +154,18 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
         fetchedResultsController?.delegate = self
     }
 
+    private func saveMergedDocument(_ pdfDocument: DocEntity) {
+        let fileManager = FileManager.default
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileName = "merged_document_\(Date().timeIntervalSince1970).pdf"
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+
+//        if pdfDocument.write(to: fileURL) {
+            // Сохраняем в CoreData
+            saveDocumentToCoreData(fileURL: fileURL, fileName: fileName)
+//        }
+    }
+
     private func generateThumbnail(for fileURL: URL) -> UIImage? {
         guard let document = PDFDocument(url: fileURL),
               let page = document.page(at: 0) else { return nil }
@@ -107,6 +176,28 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
         let scaledSize = CGSize(width: pageSize.width * scale, height: pageSize.height * scale)
 
         return page.thumbnail(of: scaledSize, for: .mediaBox)
+    }
+
+    private func saveDocumentToCoreData(fileURL: URL, fileName: String) {
+        let context = coreDataManager.container.viewContext
+        let newDocument = DocEntity(context: context)
+
+        newDocument.id = UUID()
+        newDocument.name = fileName
+        newDocument.fileExtension = "pdf"
+        newDocument.creationDate = Date()
+//        newDocument.fileURL = fileURL
+
+        // Генерируем thumbnail
+        if let thumbnail = generateThumbnail(for: fileURL) {
+            newDocument.thumbnail = thumbnail.jpegData(compressionQuality: 0.8)
+        }
+
+        do {
+            try context.save()
+        } catch {
+            handleError(error)
+        }
     }
 
 //    private func deleteFile(at url: URL) {
