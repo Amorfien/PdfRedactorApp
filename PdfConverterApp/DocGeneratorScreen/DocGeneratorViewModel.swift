@@ -8,7 +8,6 @@
 import SwiftUI
 import PhotosUI
 import PDFKit
-import CoreData
 
 final class DocGeneratorViewModel: NSObject, ObservableObject {
 //    @Published var selectedItems: [PhotosPickerItem] = [] {
@@ -27,7 +26,8 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    private let context = CoreDataManager.shared.container.viewContext
+//    private let context = CoreDataManager.shared.container.viewContext
+    private let coreDataManager = CoreDataManager.shared
 
 //    private let context: NSManagedObjectContext
 //    @Environment(\.managedObjectContext) private var context
@@ -115,45 +115,51 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
     }
 
     private func savePDFToCoreData(pdfData: Data, fileName: String) {
-//        let context = CoreDataManager.shared.container.viewContext
-        let newDocument = DocEntity(context: context)
-        newDocument.id = UUID()
-        newDocument.name = fileName.replacingOccurrences(of: ".pdf", with: "")
-        newDocument.fileExtension = "pdf"
-        newDocument.creationDate = Date()
-        newDocument.pdfData = pdfData
 
-        newDocument.fileSize = fileSizeString(for: generatedPDFURL)
+//        // Генерируем thumbnail
+//        var thumbnailData: Data? = nil
+//        if let pdfDocument = PDFDocument(data: pdfData),
+//           let firstPage = pdfDocument.page(at: 0) {
+//            let thumbnailSize = CGSize(width: 100, height: 100)
+//            let thumbnail = firstPage.thumbnail(of: thumbnailSize, for: .cropBox)
+////            newDocument.thumbnail = thumbnail.pngData()
+//            thumbnailData = thumbnail.pngData()
+//        }
 
-        // Генерируем thumbnail
-        if let pdfDocument = PDFDocument(data: pdfData),
-           let firstPage = pdfDocument.page(at: 0) {
-            let thumbnailSize = CGSize(width: 100, height: 100)
-            let thumbnail = firstPage.thumbnail(of: thumbnailSize, for: .cropBox)
-            newDocument.thumbnail = thumbnail.pngData()
-        }
+        let thumbnailData = DocumentService.makeThumbnail(from: pdfData)
+        let fileSize = DocumentService.makeFileSizeStr(from: pdfData)
+
+        let newDocument = DocGeneratorModel(
+            id: UUID(),
+            name: fileName.replacingOccurrences(of: ".pdf", with: ""),
+            fileExtension: "pdf",
+            creationDate: Date(),
+            pdfData: pdfData,
+            thumbnail: thumbnailData,
+            fileSize: fileSize
+        )
 
         do {
-            try context.save()
+            try coreDataManager.saveDocument(newDocument)
             errorMessage = nil
         } catch {
             errorMessage = "Не удалось сохранить документ в базу данных"
         }
     }
 
-    private func fileSizeString(for fileURL: URL?) -> String {
-        if let fileURL {
-            do {
-                let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-                if let fileSize = attributes[.size] as? Int64 {
-                    return ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
-                }
-            } catch {
-                print("Ошибка получения размера файла: \(error)")
-            }
-        }
-        return "Неизвестный размер"
-    }
+//    private func fileSizeString(for fileURL: URL?) -> String {
+//        if let fileURL {
+//            do {
+//                let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+//                if let fileSize = attributes[.size] as? Int64 {
+//                    return ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
+//                }
+//            } catch {
+//                print("Ошибка получения размера файла: \(error)")
+//            }
+//        }
+//        return "Неизвестный размер"
+//    }
 
     func clearSelection() {
 //        selectedItems.removeAll()

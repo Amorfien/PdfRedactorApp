@@ -54,21 +54,27 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     }
 
     func deleteDocument(_ document: DocEntity) {
-        let context = coreDataManager.container.viewContext
-        context.delete(document)
+//        let context = coreDataManager.container.viewContext
+//        context.delete(document)
+//
+//        do {
+//            try context.save()
+//            // Удаляем файл из файловой системы
+////            guard let url = document.fileURL else { return }
+////            deleteFile(at: url)
+//        } catch {
+//            handleError(error)
+//        }
 
         do {
-            try context.save()
-            // Удаляем файл из файловой системы
-//            guard let url = document.fileURL else { return }
-//            deleteFile(at: url)
+            try coreDataManager.deleteDocument(document)
         } catch {
             handleError(error)
         }
     }
 
-    func shareDocument(_ document: DocEntity) -> URL? {
-        // FIXME: - 
+    func shareDocument(_ document: DocGeneratorModel) -> URL? {
+        // FIXME: -
 //        return document.fileURL
         return nil
     }
@@ -107,6 +113,7 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
             }
         }
 
+        // FIXME: -
         // Сохраняем объединенный документ
         saveMergedDocument(mergedDocument)
 
@@ -124,81 +131,44 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     }
 
     func deleteAll() {
-        let context = coreDataManager.container.viewContext
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = DocEntity.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-
         do {
-            try context.execute(deleteRequest)
-            try context.save()
-            print("Все DocEntity удалены")
+            try coreDataManager.deleteAllDocs()
             documents.removeAll()
         } catch {
-            print("Ошибка удаления: \(error)")
+            handleError(error)
         }
     }
 
     // MARK: - Private Methods
 
     private func setupFetchedResultsController() {
-        let fetchRequest: NSFetchRequest<DocEntity> = DocEntity.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-
-        fetchedResultsController = NSFetchedResultsController(
-            fetchRequest: fetchRequest,
-            managedObjectContext: coreDataManager.container.viewContext,
-            sectionNameKeyPath: nil,
-            cacheName: nil
-        )
-
+        fetchedResultsController = coreDataManager.setupFetchedResultsController()
         fetchedResultsController?.delegate = self
     }
 
-    private func saveMergedDocument(_ pdfDocument: DocEntity) {
-        let fileManager = FileManager.default
-        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+    private func saveMergedDocument(_ pdfDocument: PDFDocument) {
         let fileName = "merged_document_\(Date().timeIntervalSince1970).pdf"
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let thumbnailData = DocumentService.makeThumbnail(from: pdfDocument.dataRepresentation())
+        let fileSize = DocumentService.makeFileSizeStr(from: pdfDocument.dataRepresentation())
 
-//        if pdfDocument.write(to: fileURL) {
-            // Сохраняем в CoreData
-            saveDocumentToCoreData(fileURL: fileURL, fileName: fileName)
-//        }
-    }
-
-    private func generateThumbnail(for fileURL: URL) -> UIImage? {
-        guard let document = PDFDocument(url: fileURL),
-              let page = document.page(at: 0) else { return nil }
-
-        let size = CGSize(width: 100, height: 150)
-        let pageSize = page.bounds(for: .mediaBox)
-        let scale = min(size.width / pageSize.width, size.height / pageSize.height)
-        let scaledSize = CGSize(width: pageSize.width * scale, height: pageSize.height * scale)
-
-        return page.thumbnail(of: scaledSize, for: .mediaBox)
-    }
-
-    private func saveDocumentToCoreData(fileURL: URL, fileName: String) {
-        let context = coreDataManager.container.viewContext
-        let newDocument = DocEntity(context: context)
-
-        newDocument.id = UUID()
-        newDocument.name = fileName
-        newDocument.fileExtension = "pdf"
-        newDocument.creationDate = Date()
-//        newDocument.fileURL = fileURL
-
-        // Генерируем thumbnail
-        if let thumbnail = generateThumbnail(for: fileURL) {
-            newDocument.thumbnail = thumbnail.jpegData(compressionQuality: 0.8)
-        }
+        let newDocument = DocGeneratorModel(
+            id: UUID(),
+            name: fileName.replacingOccurrences(of: ".pdf", with: ""),
+            fileExtension: "pdf",
+            creationDate: Date(),
+            pdfData: pdfDocument.dataRepresentation(),
+            thumbnail: thumbnailData,
+            fileSize: fileSize
+        )
 
         do {
-            try context.save()
+            try coreDataManager.saveDocument(newDocument)
+            errorMessage = nil
         } catch {
-            handleError(error)
+            errorMessage = "Не удалось сохранить документ в базу данных"
         }
     }
+
 
 //    private func deleteFile(at url: URL) {
 //        do {
