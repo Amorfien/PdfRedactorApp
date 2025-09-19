@@ -11,8 +11,9 @@ import CoreData
 struct SavedDocsView: View {
     @ObservedObject private var viewModel: SavedDocsViewModel
     @State private var showDocumentReader = false
-
+    @State private var showShareSheet = false
     @State private var documentToOpen: DocEntity?
+    @State private var documentToShare: DocEntity?
 //    private var dataToOpen: Data?
 
     init(viewModel: SavedDocsViewModel) {
@@ -36,28 +37,6 @@ struct SavedDocsView: View {
         .navigationTitle("Мои документы")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-//            if viewModel.showMergeSelection {
-//                ToolbarItem(placement: .navigationBarLeading) {
-//                    Button("Отмена") {
-//                        viewModel.cancelMerge()
-//                    }
-//                }
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    Button("Объединить") {
-//                        viewModel.completeMerge()
-//                    }
-//                    .disabled(viewModel.documentsToMerge.count < 2)
-//                }
-//            } else {
-//                ToolbarItem(placement: .topBarTrailing) {
-//                    Button {
-//                        viewModel.deleteAll()
-//                    } label: {
-//                        Image(systemName: "trash")
-//                    }
-//                    .disabled(viewModel.documents.isEmpty)
-//                }
-//            }
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 if viewModel.showMergeSelection {
                     Button("Отмена") {
@@ -83,7 +62,12 @@ struct SavedDocsView: View {
             }
         }
         .sheet(isPresented: $showDocumentReader) {
-            DocReaderView(viewModel: DocReaderViewModel(pdfData: viewModel.dataToOpen))
+            DocReaderView(viewModel: DocReaderViewModel(pdfData: viewModel.dataToOpen ?? Data()))
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = viewModel.shareDocument(documentToShare) {
+                ShareSheet(activityItems: [url])
+            }
         }
     }
 
@@ -111,8 +95,8 @@ struct SavedDocsView: View {
                 .contextMenu {
                     if !viewModel.showMergeSelection {
                         Button {
-                            //                        documentToShare = document
-                            //                        showShareSheet = true
+                                                    documentToShare = document
+                                                    showShareSheet = true
                         } label: {
                             Label("Поделиться", systemImage: "square.and.arrow.up")
                         }
@@ -166,7 +150,6 @@ struct DocumentCell: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Thumbnail
             if let thumbnailData = document.thumbnail,
                let uiImage = UIImage(data: thumbnailData) {
                 Image(uiImage: uiImage)
@@ -206,7 +189,6 @@ struct DocumentCell: View {
 
             Spacer()
 
-            // Selection Indicator
             if isMergeMode {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .blue : .gray)

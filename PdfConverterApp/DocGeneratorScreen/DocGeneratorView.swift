@@ -71,11 +71,17 @@ struct DocGeneratorView: View {
             }
         )
         .sheet(isPresented: $showDocumentReader) {
-            if let pdfURL = viewModel.generatedPDFURL {
-                DocReaderView(viewModel: DocReaderViewModel(pdfURL: pdfURL, onSaveTap: {
-                    viewModel.savePDF()
+            if let data = viewModel.generatedPDF?.dataRepresentation() {
+                DocReaderView(viewModel: DocReaderViewModel(
+                    pdfData: data,
+                    fromGenerator: true,
+                    onSaveTap: {
+                    viewModel.savePDFToCoreData()
                 }))
             }
+        }
+        .onDisappear {
+            viewModel.clearSelection()
         }
     }
 }
@@ -100,8 +106,8 @@ struct ActionButtonsView: View {
     var body: some View {
         VStack(spacing: 15) {
             Button("Создать PDF") {
-                viewModel.generatePDF { url in
-                    if url != nil {
+                viewModel.generatePDF { data in
+                    if data != nil {
                         showDocumentReader = true
                     }
                 }

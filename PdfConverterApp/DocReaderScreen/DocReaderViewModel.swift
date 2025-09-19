@@ -8,16 +8,6 @@
 import SwiftUI
 import PDFKit
 
-//final class DocReaderViewModel: ObservableObject {
-//
-//    var pdfURL: URL
-//
-//    init(pdfURL: URL) {
-//        self.pdfURL = pdfURL
-//    }
-//
-//}
-
 final class DocReaderViewModel: ObservableObject {
 
     // MARK: - Published Properties
@@ -33,14 +23,14 @@ final class DocReaderViewModel: ObservableObject {
     var onSaveTap: (() -> Void)?
 
     // MARK: - Properties
-    private let pdfURL: URL?
-    private var temporaryPDFURL: URL?
-    let pdfData: Data?
+    let pdfData: Data
+    let fromGenerator: Bool
 
     // MARK: - Init
-    init(pdfURL: URL? = nil, pdfData: Data? = nil, onSaveTap: (() -> Void)? = nil) {
-        self.pdfURL = pdfURL
+
+    init(pdfData: Data, fromGenerator: Bool = false, onSaveTap: (() -> Void)? = nil) {
         self.pdfData = pdfData
+        self.fromGenerator = fromGenerator
         self.onSaveTap = onSaveTap
         loadPDFDocument()
     }
@@ -51,23 +41,10 @@ final class DocReaderViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        do {
-            let data: Data
-            if let pdfURL {
-                data = try Data(contentsOf: pdfURL)
-            } else if let pdfData {
-                data = pdfData
-            } else {
-                isLoading = false
-                return
-            }
-            pdfDocument = PDFDocument(data: data)
-            totalPages = pdfDocument?.pageCount ?? 0
-            currentPageIndex = 0
-        } catch {
-            errorMessage = "Не удалось загрузить PDF: \(error.localizedDescription)"
-            showError = true
-        }
+        guard let pdf = PDFDocument(data: pdfData) else { return }
+        pdfDocument = pdf
+        totalPages = pdf.pageCount
+        currentPageIndex = 0
 
         isLoading = false
     }
@@ -103,13 +80,24 @@ final class DocReaderViewModel: ObservableObject {
             currentPageIndex = max(0, totalPages - 1)
         }
 
+        self.pdfDocument = document
+
         // Сохраняем изменения во временный файл
-        saveChanges()
+//        saveChanges()
     }
 
-    func sharePDF() -> URL {
-        // Возвращаем актуальный URL (оригинальный или временный с изменениями)
-        return temporaryPDFURL ?? pdfURL! //FIXME: - force
+    func sharePDF() -> URL? {
+        guard let data = pdfDocument?.dataRepresentation() else { return nil}
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let fileURL = tempDirectory.appendingPathComponent("document.pdf")
+
+        do {
+            try data.write(to: fileURL)
+            return fileURL
+        } catch {
+            print("Ошибка сохранения временного файла: \(error)")
+            return fileURL
+        }
     }
 
     func saveToDb() {
@@ -117,18 +105,6 @@ final class DocReaderViewModel: ObservableObject {
     }
 
     // MARK: - Private Methods
-
-    private func saveChanges() {
-        guard let document = pdfDocument else { return }
-
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let fileName = "temp_edited_\(Date().timeIntervalSince1970).pdf"
-        let tempURL = tempDirectory.appendingPathComponent(fileName)
-
-        if document.write(to: tempURL) {
-            temporaryPDFURL = tempURL
-        }
-    }
 
     func getThumbnailForPage(at index: Int, size: CGSize = CGSize(width: 60, height: 80)) -> UIImage? {
         guard let document = pdfDocument, index >= 0, index < document.pageCount,

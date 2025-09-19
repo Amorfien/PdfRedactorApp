@@ -16,13 +16,9 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var showError: Bool = false
-//    @Published var selectedDocument: DocEntity?
-//    @Published var showDocumentReader: Bool = false
-//    @Published var documentToOpen: DocEntity?
-
-        @Published var showMergeSelection: Bool = false
-        @Published var documentToMerge: DocEntity?
-        @Published var documentsToMerge: [DocEntity] = []
+    @Published var showMergeSelection: Bool = false
+    @Published var documentToMerge: DocEntity?
+    @Published var documentsToMerge: [DocEntity] = []
     var dataToOpen: Data?
 
     // MARK: - Core Data
@@ -54,18 +50,6 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
     }
 
     func deleteDocument(_ document: DocEntity) {
-//        let context = coreDataManager.container.viewContext
-//        context.delete(document)
-//
-//        do {
-//            try context.save()
-//            // Удаляем файл из файловой системы
-////            guard let url = document.fileURL else { return }
-////            deleteFile(at: url)
-//        } catch {
-//            handleError(error)
-//        }
-
         do {
             try coreDataManager.deleteDocument(document)
         } catch {
@@ -73,10 +57,18 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
         }
     }
 
-    func shareDocument(_ document: DocGeneratorModel) -> URL? {
-        // FIXME: -
-//        return document.fileURL
-        return nil
+    func shareDocument(_ document: DocEntity?) -> URL? {
+        guard let data = document?.pdfData else { return nil }
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let fileURL = tempDirectory.appendingPathComponent("document.pdf")
+
+        do {
+            try data.write(to: fileURL)
+            return fileURL
+        } catch {
+            print("Ошибка сохранения временного файла: \(error)")
+            return fileURL
+        }
     }
 
     func startMergeProcess(with document: DocEntity) {
@@ -100,7 +92,6 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
 
         isLoading = true
 
-        // Создаем новый объединенный PDF
         let mergedDocument = PDFDocument()
 
         for document in documentsToMerge {
@@ -113,11 +104,8 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
             }
         }
 
-        // FIXME: -
-        // Сохраняем объединенный документ
         saveMergedDocument(mergedDocument)
 
-        // Сбрасываем состояние
         documentsToMerge = []
         documentToMerge = nil
         showMergeSelection = false
@@ -168,15 +156,6 @@ final class SavedDocsViewModel: NSObject, ObservableObject {
             errorMessage = "Не удалось сохранить документ в базу данных"
         }
     }
-
-
-//    private func deleteFile(at url: URL) {
-//        do {
-//            try FileManager.default.removeItem(at: url)
-//        } catch {
-//            print("Ошибка при удалении файла: \(error)")
-//        }
-//    }
 
     private func handleError(_ error: Error) {
         errorMessage = error.localizedDescription

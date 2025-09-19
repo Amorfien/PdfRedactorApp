@@ -34,7 +34,7 @@ struct DocReaderView: View {
                         HStack(spacing: 20) {
                             Spacer()
                             shareButton
-                            if viewModel.pdfData == nil {
+                            if viewModel.fromGenerator {
                                 saveButton
                             }
                         }
@@ -66,7 +66,9 @@ struct DocReaderView: View {
             Text("Вы уверены, что хотите удалить эту страницу?")
         }
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(activityItems: [viewModel.sharePDF()])
+            if let url = viewModel.sharePDF() {
+                ShareSheet(activityItems: [url])
+            }
         }
     }
 
@@ -256,6 +258,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     let url: URL = URL(string: "https://disk.sample.cat/samples/pdf/sample-images-fit.pdf")!
 
     NavigationView {
-        DocReaderView(viewModel: DocReaderViewModel(pdfURL: url))
+        DocReaderView(viewModel: DocReaderViewModel(pdfData: (PDFDocument(url: url)?.dataRepresentation())!))
     }
 }
