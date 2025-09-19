@@ -14,7 +14,6 @@ struct SavedDocsView: View {
     @State private var showShareSheet = false
     @State private var documentToOpen: DocEntity?
     @State private var documentToShare: DocEntity?
-//    private var dataToOpen: Data?
 
     init(viewModel: SavedDocsViewModel) {
         self.viewModel = viewModel
@@ -172,7 +171,6 @@ struct DocumentCell: View {
                     )
             }
 
-            // Document Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(document.name ?? "Без названия")
                     .font(.headline)

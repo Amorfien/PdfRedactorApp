@@ -13,14 +13,8 @@ struct DocReaderView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var showShareSheet = false
 
-//    private let isJustGenerated: Bool
-
-    init(
-        viewModel: DocReaderViewModel//,
-//        isJustGenerated: Bool = true
-    ) {
+    init(viewModel: DocReaderViewModel) {
         self.viewModel = viewModel
-//        self.isJustGenerated = isJustGenerated
     }
 
     var body: some View {
@@ -74,14 +68,11 @@ struct DocReaderView: View {
 
     private var contentView: some View {
         VStack(spacing: 0) {
-            // PDF Viewer
             PDFViewer(document: viewModel.pdfDocument, currentPage: $viewModel.currentPageIndex)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Controls
             controlsSection
 
-            // Page thumbnails
             if viewModel.totalPages > 1 {
                 pageThumbnailsSection
             }

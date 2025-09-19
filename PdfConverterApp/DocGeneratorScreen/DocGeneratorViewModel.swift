@@ -16,8 +16,6 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    private let coreDataManager = CoreDataManager.shared
-
     func removeImage(_ image: UIImage) {
         if let index = selectedImages.firstIndex(of: image) {
             selectedImages.remove(at: index)
@@ -40,29 +38,6 @@ final class DocGeneratorViewModel: NSObject, ObservableObject {
         }
         generatedPDF = pdfDocument
         completion(pdfDocument.dataRepresentation())
-    }
-
-    func savePDFToCoreData() {
-        guard let pdfData = generatedPDF?.dataRepresentation() else { return }
-        let thumbnailData = DocumentService.makeThumbnail(from: pdfData)
-        let fileSize = DocumentService.makeFileSizeStr(from: pdfData)
-
-        let newDocument = DocGeneratorModel(
-            id: UUID(),
-            name: "document_\(Date().timeIntervalSince1970)",
-            fileExtension: "pdf",
-            creationDate: Date(),
-            pdfData: pdfData,
-            thumbnail: thumbnailData,
-            fileSize: fileSize
-        )
-
-        do {
-            try coreDataManager.saveDocument(newDocument)
-            errorMessage = nil
-        } catch {
-            errorMessage = "Не удалось сохранить документ в базу данных"
-        }
     }
 
     func clearSelection() {

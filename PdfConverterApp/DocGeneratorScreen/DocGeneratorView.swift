@@ -75,9 +75,7 @@ struct DocGeneratorView: View {
                 DocReaderView(viewModel: DocReaderViewModel(
                     pdfData: data,
                     fromGenerator: true,
-                    onSaveTap: {
-                    viewModel.savePDFToCoreData()
-                }))
+                    ))
             }
         }
         .onDisappear {

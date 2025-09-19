@@ -20,18 +20,16 @@ final class DocReaderViewModel: ObservableObject {
     @Published var showDeleteConfirmation: Bool = false
     @Published var pageToDelete: Int?
 
-    var onSaveTap: (() -> Void)?
-
     // MARK: - Properties
-    let pdfData: Data
     let fromGenerator: Bool
+    private let pdfData: Data
+    private let coreDataManager = CoreDataManager.shared
 
     // MARK: - Init
 
-    init(pdfData: Data, fromGenerator: Bool = false, onSaveTap: (() -> Void)? = nil) {
+    init(pdfData: Data, fromGenerator: Bool = false) {
         self.pdfData = pdfData
         self.fromGenerator = fromGenerator
-        self.onSaveTap = onSaveTap
         loadPDFDocument()
     }
 
@@ -70,20 +68,28 @@ final class DocReaderViewModel: ObservableObject {
     }
 
     func deletePage(at index: Int) {
-        guard let document = pdfDocument, index >= 0, index < document.pageCount else { return }
+        guard let originalDocument = pdfDocument,
+              index >= 0, index < originalDocument.pageCount else { return }
 
-        document.removePage(at: index)
-        totalPages = document.pageCount
+        let newDocument = PDFDocument()
 
-        // Обновляем текущую страницу если нужно
-        if currentPageIndex >= totalPages {
-            currentPageIndex = max(0, totalPages - 1)
+        for i in 0..<originalDocument.pageCount where i != index {
+            if let page = originalDocument.page(at: i) {
+                newDocument.insert(page, at: newDocument.pageCount)
+            }
         }
 
-        self.pdfDocument = document
+        if currentPageIndex >= totalPages {
+            currentPageIndex = max(0, totalPages - 1)
+        } else if currentPageIndex >= index {
+            currentPageIndex = max(0, currentPageIndex - 1)
+        }
+        pdfDocument = newDocument
+        totalPages = newDocument.pageCount
 
-        // Сохраняем изменения во временный файл
-//        saveChanges()
+        if !fromGenerator {
+            saveToDb()
+        }
     }
 
     func sharePDF() -> URL? {
@@ -101,7 +107,26 @@ final class DocReaderViewModel: ObservableObject {
     }
 
     func saveToDb() {
-        onSaveTap?()
+        guard let pdfData = pdfDocument?.dataRepresentation() else { return }
+        let thumbnailData = DocumentService.makeThumbnail(from: pdfData)
+        let fileSize = DocumentService.makeFileSizeStr(from: pdfData)
+
+        let newDocument = DocGeneratorModel(
+            id: UUID(),
+            name: "document_\(Date().timeIntervalSince1970)",
+            fileExtension: "pdf",
+            creationDate: Date(),
+            pdfData: pdfData,
+            thumbnail: thumbnailData,
+            fileSize: fileSize
+        )
+
+        do {
+            try coreDataManager.saveDocument(newDocument)
+            errorMessage = nil
+        } catch {
+            errorMessage = "Не удалось сохранить документ в базу данных"
+        }
     }
 
     // MARK: - Private Methods
@@ -124,33 +149,5 @@ final class DocReaderViewModel: ObservableObject {
 
     var pageIndices: [Int] {
         Array(0..<totalPages)
-    }
-}
-
-// MARK: - PDF Document Extension for deletion
-extension PDFDocument {
-    func removePage(at index: Int) {
-        guard index >= 0, index < pageCount else { return }
-
-        // Создаем новый документ без удаленной страницы
-        let newDocument = PDFDocument()
-
-        for i in 0..<pageCount where i != index {
-            if let page = page(at: i) {
-                newDocument.insert(page, at: newDocument.pageCount)
-            }
-        }
-
-        // Заменяем страницы в текущем документе
-        for i in 0..<newDocument.pageCount {
-            if let page = newDocument.page(at: i) {
-                self.insert(page, at: i)
-            }
-        }
-
-        // Удаляем лишние страницы
-        while pageCount > newDocument.pageCount {
-            removePage(at: pageCount - 1)
-        }
     }
 }

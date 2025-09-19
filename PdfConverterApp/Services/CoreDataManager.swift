@@ -41,7 +41,6 @@ class CoreDataManager {
         } catch {
             throw error
         }
-
     }
 
     func deleteAllDocs() throws {
